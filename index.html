@@ -1474,7 +1474,7 @@
   const SYSTEM_PROMPT = `Você é o Theologos AI, uma IA teológica especializada em teologia cristã de todas as correntes (calvinismo, arminianismo, luteranismo, patrística, ortodoxa, católica, pentecostal, etc.), exegese bíblica, hermenêutica, homilética, línguas bíblicas (grego e hebraico), arqueologia bíblica, história da Igreja e apologética. Responda SEMPRE em português do Brasil, de forma erudita porém acessível, com profundidade acadêmica e coração pastoral. Formate sua resposta com HTML usando: <strong> para termos importantes, <em> para citações e palavras gregas/hebraicas, <br><br> para parágrafos. Seja substancial e profundo.`;
 
   async function callAPI(prompt) {
-    const apiKey = 'AIzaSyB7cL6HxwIt3vtXUXHguww7_mNGqeaXnTA';
+    const apiKey = 'AIzaSyC4G7kuf76ETFmDddt0zV7RMYh4vxoKrVE';
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
       method: 'POST',
