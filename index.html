@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap');
 
@@ -239,6 +240,154 @@
   .et-next-btn { margin-top: 10px; background: var(--gold-dark); border: none; color: var(--dark); padding: 8px 18px; border-radius: 6px; cursor: pointer; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1px; display: none; }
   .et-ask-btn { margin-top: 16px; width: 100%; padding: 11px; background: transparent; border: 1px solid var(--gold-dark); border-radius: 6px; color: var(--gold); cursor: pointer; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1px; transition: all 0.2s; }
   .et-ask-btn:hover { background: rgba(201,168,76,0.1); }
+
+  /* ===== MOBILE RESPONSIVO ===== */
+  .mobile-menu-btn {
+    display: none;
+    background: none;
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--gold);
+    margin-left: auto;
+    line-height: 1;
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 150;
+  }
+
+  @media (max-width: 768px) {
+    :root {
+      --header-h: 56px;
+      --sidebar-w: 280px;
+    }
+
+    /* Header mobile */
+    .header {
+      padding: 0 16px;
+      gap: 10px;
+    }
+    .logo-title { font-size: 18px; letter-spacing: 2px; flex: 1; }
+    .logo-sub { display: none; }
+    .header-badge { display: none; }
+    .header > div:last-child { display: none; }
+
+    /* Botão hamburguer visível */
+    .mobile-menu-btn { display: flex; align-items: center; justify-content: center; margin-left: 0; }
+
+    /* Layout */
+    .layout { position: relative; }
+
+    /* Sidebar vira gaveta lateral */
+    .sidebar {
+      position: fixed;
+      top: var(--header-h);
+      left: -var(--sidebar-w);
+      left: -280px;
+      width: var(--sidebar-w);
+      height: calc(100vh - var(--header-h));
+      z-index: 200;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      padding-top: 12px;
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+    .sidebar-overlay.open {
+      display: block;
+    }
+
+    /* Main ocupa tudo */
+    .main { width: 100%; }
+
+    /* Screen padding menor */
+    .screen { padding: 16px; }
+    .page-title { font-size: 20px; }
+    .page-sub { font-size: 13px; margin-bottom: 16px; }
+
+    /* Stats em 2x2 no mobile */
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+    .stat-num { font-size: 20px; }
+
+    /* Cards em coluna única */
+    .cards-grid { grid-template-columns: 1fr; gap: 10px; }
+
+    /* Verse box */
+    .verse-box { padding: 18px; }
+    .verse-text { font-size: 16px; }
+
+    /* Toolbars */
+    .analysis-toolbar { flex-direction: column; gap: 8px; }
+    .analysis-input { min-width: unset; width: 100%; }
+
+    /* Arch cards */
+    .arch-card { flex-direction: column; }
+    .arch-img { width: 100%; height: 60px; border-right: none; border-bottom: 1px solid rgba(201,168,76,0.15); }
+
+    /* Sermon form grid */
+    .sermon-builder .form-group + .form-group { margin-top: 0; }
+    div[style*="grid-template-columns: 1fr 1fr"] { display: flex !important; flex-direction: column !important; gap: 0 !important; }
+
+    /* Chat */
+    .chat-messages { max-height: 240px; }
+    .msg-bubble { max-width: 95%; font-size: 12px; }
+
+    /* Debate grid */
+    .et-debate { grid-template-columns: 1fr; }
+
+    /* Escolas teológicas */
+    .et-search-row { flex-direction: column; gap: 8px; }
+    .et-search-row input { width: 100%; }
+    .et-search-row .btn { width: 100%; }
+    .et-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    .et-filters { gap: 4px; }
+    .et-filter { font-size: 10px; padding: 3px 8px; }
+
+    /* Detail panel */
+    .et-detail { padding: 14px; }
+    .et-detail-title { font-size: 18px; }
+    .et-detail-header { flex-wrap: wrap; gap: 8px; }
+
+    /* Key points grid */
+    .et-kp-grid { grid-template-columns: 1fr 1fr; }
+
+    /* Botões rápidos */
+    div[style*="display: flex; gap: 8px; margin-bottom: 16px"] {
+      flex-wrap: wrap;
+    }
+    .btn-outline[style*="padding:6px 12px"] {
+      font-size: 10px !important;
+      padding: 5px 8px !important;
+    }
+
+    /* Response box */
+    .response-box { padding: 14px; font-size: 14px; }
+
+    /* Dict result */
+    .dict-result { padding: 16px; }
+    .dict-original { font-size: 22px; }
+
+    /* Timeline */
+    .timeline { padding-left: 18px; }
+
+    /* Scrollbar mais fino em mobile */
+    ::-webkit-scrollbar { width: 2px; }
+  }
+
+  @media (max-width: 400px) {
+    .logo-title { font-size: 16px; letter-spacing: 1px; }
+    .screen { padding: 12px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .et-grid { grid-template-columns: 1fr 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -260,8 +409,10 @@
     <div class="header-badge">IA Integrada</div>
     <div style="width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid var(--gold-dark);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;">✝</div>
   </div>
+  <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">☰</button>
 </div>
 
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileMenu()"></div>
 <div class="layout">
   <div class="sidebar">
     <div class="sidebar-section">
@@ -622,6 +773,7 @@
     document.getElementById('screen-' + id).classList.add('active');
     if (el) el.classList.add('active');
     if (id === 'progress') renderProgress();
+    closeMobileMenu();
   }
 
   function switchTab(tab) {
@@ -1044,7 +1196,18 @@
 
   // ===== INIT =====
   etRenderGrid(etEscolas);
+
+  // ===== MOBILE MENU =====
+  function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('open');
+  }
+  function closeMobileMenu() {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  }
 </script>
 </body>
 </html>
-
