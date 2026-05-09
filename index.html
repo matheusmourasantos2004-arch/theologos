@@ -800,7 +800,7 @@ const SYSTEM_PROMPT = `Você é o Theologos AI, uma IA teológica especializada 
 async function callAPI(prompt, systemOverride) {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json','Authorization': 'Bearer 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'},
+    headers: {'Content-Type': 'application/json','Authorization': 'Bearer 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'},
     body: JSON.stringify({model: 'llama-3.3-70b-versatile', messages: [{role:'system',content: systemOverride || SYSTEM_PROMPT},{role:'user',content:prompt}], max_tokens: 1500, temperature: 0.7})
   });
   const data = await response.json();
