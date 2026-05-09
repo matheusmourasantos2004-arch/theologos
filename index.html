@@ -1337,7 +1337,7 @@ async function bibliaAskAI() {
 
 document.addEventListener('click', (e) => {
   const popup = document.getElementById('strong-popup');
-  if (popup && popup.classList.contains('open') && !popup.contains(e.target) && !e.target.classList.contains('sw') && !e.target.closest('.sw') && !e.target.classList.contains('sw-plain')) closeStrongPopup();
+  if (popup && popup.classList.contains('open') && !popup.contains(e.target) && !e.target.closest('.sw-click')) closeStrongPopup();
 });
 
 // ===================================================
