@@ -1136,36 +1136,40 @@ function renderVerses(verses, book, container) {
 async function loadChapterViaAI(book, chapter, container) {
   try {
     const lang = book.lang === 'hebraico' ? 'hebraico (AT)' : 'grego koiné (NT)';
-    const prompt = `Você é um especialista em Bíblia interlinear com Strong. Forneça ${book.name} capítulo ${chapter} em formato JSON com Strong's numbers para cada palavra. Use a versão ARA (Almeida Revista e Atualizada) que é a mais próxima do original em português.
+    const prompt = `Você é um especialista em Bíblia interlinear com Strong. Forneça ${book.name} capítulo ${chapter} em formato JSON com Strong's numbers para cada palavra. Use a versão ARA (Almeida Revista e Atualizada).
 
 RESPONDA APENAS COM JSON VÁLIDO, sem markdown, sem explicações. Formato:
-{"verses":[{"v":1,"text":[{"w":"palavra_pt","s":"G0000"},...],"orig":"texto_original_${lang}"},{"v":2,...}]}
+{"verses":[{"v":1,"text":[{"w":"palavra_pt","s":"G0000"}],"orig":"texto_original"},{"v":2,"text":[{"w":"palavra_pt","s":"G0000"}],"orig":"texto_original"}]}
 
-Use números Strong reais: G para grego NT, H para hebraico AT. Inclua todos os versículos do capítulo ${chapter}. Palavras pequenas (artigos, preposições) também devem ter Strong. Máximo de versículos dependendo do capítulo.`;
+Use números Strong reais: G para grego NT, H para hebraico AT. Inclua todos os versículos do capítulo ${chapter}. IMPORTANTE: não use vírgula após o último elemento de nenhum array ou objeto.`;
 
-    const rawRes = await callAPI(prompt, `Você é um especialista em Bíblia interlinear com Strong's numbers. Responda APENAS JSON válido sem markdown, sem backticks, sem explicações.`);
+    const rawRes = await callAPI(prompt, `Você é um especialista em Bíblia interlinear com Strong's numbers. Responda APENAS JSON válido sem markdown, sem backticks, sem explicações. NUNCA use vírgula antes de ] ou }.`);
 
-    let cleanRes = rawRes.replace(/```json/g,'').replace(/```/g,'').trim();
+    let cleanRes = rawRes
+      .replace(/```json/g, '').replace(/```/g, '').trim();
+
+    // pega só o bloco JSON
     const firstBrace = cleanRes.indexOf('{');
     if (firstBrace > 0) cleanRes = cleanRes.substring(firstBrace);
     const lastBrace = cleanRes.lastIndexOf('}');
-    if (lastBrace < cleanRes.length-1) cleanRes = cleanRes.substring(0, lastBrace+1);
+    if (lastBrace < cleanRes.length - 1) cleanRes = cleanRes.substring(0, lastBrace + 1);
+
+    // ✅ remove vírgulas antes de ] ou } (trailing commas)
+    cleanRes = cleanRes.replace(/,\s*([}\]])/g, '$1');
 
     const parsed = JSON.parse(cleanRes);
-    BIBLE_DATA[book.id+'_'+chapter] = parsed.verses;
+    BIBLE_DATA[book.id + '_' + chapter] = parsed.verses;
     renderVerses(parsed.verses, book, container);
   } catch(e) {
     container.innerHTML = `<div class="bible-chapter-container">
       <div class="bible-chapter-title">${book.name} ${chapter}</div>
       <div style="text-align:center;padding:20px;color:var(--text-dim);font-family:'EB Garamond',serif;font-size:15px;">
         <p>Erro ao carregar via IA: ${e.message}</p>
-        <p style="margin-top:8px;font-size:13px;">Verifique sua API key na variável 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</p>
         <button class="btn" onclick="bibliaRenderChapter()" style="margin-top:16px;">🔄 TENTAR NOVAMENTE</button>
       </div>
     </div>`;
   }
 }
-
 // ===== POPUP STRONG =====
 function openStrongPopup(strongNum, event) {
   event.stopPropagation();
