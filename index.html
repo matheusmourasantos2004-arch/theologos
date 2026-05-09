@@ -721,14 +721,19 @@ function switchTab(tab) {
 const SYSTEM_PROMPT = `Você é o Theologos AI, uma IA teológica especializada em teologia cristã de todas as correntes, exegese bíblica, hermenêutica, homilética, línguas bíblicas (grego e hebraico), arqueologia bíblica, história da Igreja e apologética. Responda SEMPRE em português do Brasil, de forma erudita porém acessível. Formate com HTML: <strong> para termos importantes, <em> para citações e palavras gregas/hebraicas, <br><br> para parágrafos.`;
 
 async function callAPI(prompt, systemOverride) {
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json','Authorization': 'Bearer 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'},
-    body: JSON.stringify({model: 'llama-3.3-70b-versatile', messages: [{role:'system',content: systemOverride || SYSTEM_PROMPT},{role:'user',content:prompt}], max_tokens: 1500, temperature: 0.7})
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: systemOverride || SYSTEM_PROMPT,
+      messages: [{role:'user',content:prompt}]
+    })
   });
   const data = await response.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.choices?.[0]?.message?.content || 'Sem resposta.';
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+  return data.content?.[0]?.text || 'Sem resposta.';
 }
 
 function showLoading(elId) {
@@ -1198,14 +1203,19 @@ Responda SOMENTE com JSON válido, sem markdown, sem explicação extra:
   "def": "definição em português (2-3 frases)",
   "tags": ["tag1","tag2"]
 }`;
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer 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'},
-      body: JSON.stringify({model:'llama-3.3-70b-versatile', messages:[{role:'system',content:'Você é um especialista em Strong bíblico. Responda APENAS com JSON puro, sem markdown.'},{role:'user',content:prompt}], max_tokens:400, temperature:0.2})
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        system: 'Você é um especialista em Strong bíblico. Responda APENAS com JSON puro, sem markdown, sem explicação.',
+        messages: [{role:'user',content:prompt}]
+      })
     });
     const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
-    let txt = data.choices?.[0]?.message?.content || '{}';
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    let txt = data.content?.[0]?.text || '{}';
     txt = txt.replace(/```json|```/g,'').trim();
     const j = JSON.parse(txt);
     document.getElementById('sp-num').textContent = j.num || `"${original}"`;
