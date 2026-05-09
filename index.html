@@ -1104,16 +1104,20 @@ function renderVersesFromAPI(verses, book, container, isEnglish) {
           <div class="bible-verse-text">`;
 
       if (bibState.showStrong) {
-        // tokenizar e marcar palavras com Strong
+        // tokenizar: qualquer palavra clicável abre o Strong via IA
         const words = v.text.trim().split(/(\s+)/);
         words.forEach(token => {
           if (/^\s+$/.test(token)) { html += ' '; return; }
-          const clean = token.toLowerCase().replace(/[^\wáéíóúâêîôûãõçàü]/g, '');
+          const clean = token.toLowerCase()
+            .normalize('NFD')
+            .replace(/[^a-z\u00c0-\u017e]/g, '')
+            .normalize('NFC');
+          if (!clean) { html += escapeHtml(token); return; }
           const sNum = strongMap[clean];
           if (sNum) {
-            html += `<span class="sw" onclick="openStrongPopup('${sNum}', '${escapeAttr(token)}', event)">${escapeHtml(token)}<sup style="font-size:8px;color:var(--gold-dark);vertical-align:super;margin-left:1px;">${sNum}</sup></span>`;
+            html += `<span class="sw" style="cursor:pointer;border-bottom:1px solid rgba(201,168,76,0.5);" onclick="openStrongPopup('${sNum}', '${escapeAttr(token)}', event)">${escapeHtml(token)}<sup style="font-size:8px;color:var(--gold-dark);vertical-align:super;margin-left:1px;">${sNum}</sup></span>`;
           } else {
-            html += `<span class="sw-plain" onclick="openStrongGeneric('${escapeAttr(clean)}', '${(isHebrew?'AT':'NT')}', event)" style="cursor:pointer;border-bottom:1px dotted transparent;transition:border-color 0.1s;" onmouseover="this.style.borderBottomColor='rgba(201,168,76,0.4)'" onmouseout="this.style.borderBottomColor='transparent'">${escapeHtml(token)}</span>`;
+            html += `<span class="sw-plain" style="cursor:pointer;border-bottom:1px dotted rgba(201,168,76,0.3);transition:border-color 0.15s;" onmouseover="this.style.borderBottomColor='rgba(201,168,76,0.8)'" onmouseout="this.style.borderBottomColor='rgba(201,168,76,0.3)'" onclick="openStrongAI('${escapeAttr(clean)}', '${escapeAttr(token)}', '${isHebrew?'AT':'NT'}', event)">${escapeHtml(token)}</span>`;
           }
         });
       } else {
@@ -1140,6 +1144,58 @@ function openStrongPopup(strongNum, word, event) {
   event.stopPropagation();
   const data = STRONG_DB[strongNum];
   _showPopup(strongNum, data?.orig || '—', data?.translit || '', data?.def || `Número Strong ${strongNum}`, data?.tags || [], word, event);
+}
+
+async function openStrongAI(clean, original, testament, event) {
+  event.stopPropagation();
+  const popup = document.getElementById('strong-popup');
+  document.getElementById('sp-num').textContent = `"${original}" — ${testament}`;
+  document.getElementById('sp-original').textContent = '⏳';
+  document.getElementById('sp-translit').textContent = 'Consultando análise Strong...';
+  document.getElementById('sp-def').textContent = '';
+  document.getElementById('sp-tags').innerHTML = '';
+  document.getElementById('sp-ai-result').style.display = 'none';
+  document.getElementById('sp-loading').classList.remove('show');
+  document.getElementById('sp-ai-btn').style.display = 'none';
+  bibState.strongClickWord = {word: clean, testament, num: null};
+  _positionPopup(popup, event);
+
+  try {
+    const lang = testament === 'AT' ? 'hebraico' : 'grego';
+    const prompt = `Análise Strong da palavra portuguesa "${original}" (${testament}, idioma original: ${lang}).
+Responda SOMENTE com JSON válido, sem markdown, sem explicação extra:
+{
+  "num": "G1234 ou H1234",
+  "orig": "palavra no idioma original",
+  "translit": "transliteração",
+  "def": "definição em português (2-3 frases)",
+  "tags": ["tag1","tag2"]
+}`;
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer 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'},
+      body: JSON.stringify({model:'llama-3.3-70b-versatile', messages:[{role:'system',content:'Você é um especialista em Strong bíblico. Responda APENAS com JSON puro, sem markdown.'},{role:'user',content:prompt}], max_tokens:400, temperature:0.2})
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+    let txt = data.choices?.[0]?.message?.content || '{}';
+    txt = txt.replace(/```json|```/g,'').trim();
+    const j = JSON.parse(txt);
+    document.getElementById('sp-num').textContent = j.num || `"${original}"`;
+    document.getElementById('sp-original').textContent = j.orig || original;
+    document.getElementById('sp-translit').textContent = j.translit ? `/ ${j.translit} /` : '';
+    document.getElementById('sp-def').textContent = j.def || '';
+    document.getElementById('sp-tags').innerHTML = (j.tags||[]).map(t=>`<span class="sp-tag">${t}</span>`).join('');
+    document.getElementById('sp-ai-btn').style.display = 'block';
+    document.getElementById('sp-ai-btn').textContent = '✝ ANÁLISE TEOLÓGICA PROFUNDA';
+    document.getElementById('sp-ai-btn').disabled = false;
+    bibState.strongClickWord = {word: clean, num: j.num, orig: j.orig, translit: j.translit};
+  } catch(e) {
+    document.getElementById('sp-original').textContent = '!';
+    document.getElementById('sp-translit').textContent = '';
+    document.getElementById('sp-def').textContent = 'Erro ao consultar: ' + e.message;
+    document.getElementById('sp-ai-btn').style.display = 'block';
+  }
 }
 
 function openStrongGeneric(word, testament, event) {
