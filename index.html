@@ -1138,11 +1138,11 @@ async function loadChapterViaAI(book, chapter, container) {
 
   const lang = book.lang === 'hebraico' ? 'hebraico (AT)' : 'grego koiné (NT)';
 
-  const prompt = `JSON only. No text before or after. No markdown.
-{"verses":[{"v":1,"text":[{"w":"palavra","s":"G0000"}],"orig":"original"},{"v":2,"text":[{"w":"palavra","s":"G0000"}],"orig":"original"}]}
-Generate ${book.name} chapter ${chapter} (${lang}) in this exact format. All verses. Real Strong numbers (G for Greek, H for Hebrew).`;
-
-  const systemMsg = `You output only valid JSON. No markdown. No explanation. No trailing commas. Always double quotes. Complete all verses.`;
+const prefix = book.lang === 'hebraico' ? 'H' : 'G';
+  const systemMsg = `Você é especialista em Bíblia interlinear. Retorne APENAS JSON válido, sem markdown, sem vírgulas finais, sem texto extra.`;
+  const prompt = `Gere ${book.name} capítulo ${chapter} (idioma: ${lang}) em JSON.
+OBRIGATÓRIO: todas as palavras no campo "w" em PORTUGUÊS DO BRASIL versão ARA. Inclua TODOS os versículos. Números Strong reais com prefixo ${prefix}.
+Formato: {"verses":[{"v":1,"text":[{"w":"No","s":"${prefix}1722"},{"w":"princípio","s":"${prefix}0746"}],"orig":"texto original"},{"v":2,"text":[{"w":"palavra","s":"${prefix}0000"}],"orig":"orig"}]}`;
 
   function repairJSON(str) {
     return str
@@ -1162,9 +1162,9 @@ Generate ${book.name} chapter ${chapter} (${lang}) in this exact format. All ver
       body: JSON.stringify({
         model: model,
         messages: [{role:'system',content: systemMsg},{role:'user',content: prompt}],
-        max_tokens: 4000,
+        max_tokens: 6000,
         temperature: 0.1,
-        response_format: {type: "json_object"}
+        ...(model.includes('llama') ? {response_format: {type: "json_object"}} : {})
       })
     });
     const data = await response.json();
