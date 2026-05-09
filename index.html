@@ -1105,6 +1105,7 @@ function renderVersesFromAPI(verses, book, container, isEnglish) {
 
       if (bibState.showStrong) {
         // tokenizar: qualquer palavra clicável abre o Strong via IA
+        // Usa data-attributes para evitar quebra de HTML com nomes próprios/acentos
         const words = v.text.trim().split(/(\s+)/);
         words.forEach(token => {
           if (/^\s+$/.test(token)) { html += ' '; return; }
@@ -1114,10 +1115,12 @@ function renderVersesFromAPI(verses, book, container, isEnglish) {
             .normalize('NFC');
           if (!clean) { html += escapeHtml(token); return; }
           const sNum = strongMap[clean];
+          const safeToken = escapeHtml(token);
+          const safeClean = escapeHtml(clean);
           if (sNum) {
-            html += `<span class="sw" style="cursor:pointer;border-bottom:1px solid rgba(201,168,76,0.5);" onclick="openStrongPopup('${sNum}', '${escapeAttr(token)}', event)">${escapeHtml(token)}<sup style="font-size:8px;color:var(--gold-dark);vertical-align:super;margin-left:1px;">${sNum}</sup></span>`;
+            html += `<span class="sw sw-click" data-snum="${sNum}" data-word="${safeToken}" style="cursor:pointer;border-bottom:1px solid rgba(201,168,76,0.5);">${safeToken}<sup style="font-size:8px;color:var(--gold-dark);vertical-align:super;margin-left:1px;">${sNum}</sup></span>`;
           } else {
-            html += `<span class="sw-plain" style="cursor:pointer;border-bottom:1px dotted rgba(201,168,76,0.3);transition:border-color 0.15s;" onmouseover="this.style.borderBottomColor='rgba(201,168,76,0.8)'" onmouseout="this.style.borderBottomColor='rgba(201,168,76,0.3)'" onclick="openStrongAI('${escapeAttr(clean)}', '${escapeAttr(token)}', '${isHebrew?'AT':'NT'}', event)">${escapeHtml(token)}</span>`;
+            html += `<span class="sw-plain sw-click" data-clean="${safeClean}" data-word="${safeToken}" data-testament="${isHebrew?'AT':'NT'}" style="cursor:pointer;border-bottom:1px dotted rgba(201,168,76,0.3);transition:border-color 0.15s;">${safeToken}</span>`;
           }
         });
       } else {
@@ -1131,6 +1134,30 @@ function renderVersesFromAPI(verses, book, container, isEnglish) {
   html += '</div>';
   container.innerHTML = html;
 }
+
+// Listener centralizado para cliques Strong — evita quebra de HTML com onclick inline
+document.addEventListener('click', function(event) {
+  const el = event.target.closest('.sw-click');
+  if (!el) return;
+  event.stopPropagation();
+  const snum = el.dataset.snum;
+  const word = el.dataset.word || '';
+  const clean = el.dataset.clean || word.toLowerCase();
+  const testament = el.dataset.testament || 'NT';
+  if (snum) {
+    openStrongPopup(snum, word, event);
+  } else {
+    openStrongAI(clean, word, testament, event);
+  }
+});
+
+// Efeito hover via JS para sw-plain
+document.addEventListener('mouseover', function(e) {
+  if (e.target.classList.contains('sw-plain')) e.target.style.borderBottomColor = 'rgba(201,168,76,0.8)';
+});
+document.addEventListener('mouseout', function(e) {
+  if (e.target.classList.contains('sw-plain')) e.target.style.borderBottomColor = 'rgba(201,168,76,0.3)';
+});
 
 function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
