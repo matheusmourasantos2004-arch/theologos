@@ -723,13 +723,8 @@ const SYSTEM_PROMPT = `Você é o Theologos AI, uma IA teológica especializada 
 async function callAPI(prompt, systemOverride) {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer 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'},
-    body: JSON.stringify({
-      model: 'gemma2-9b-it',
-      max_tokens: 800,
-      temperature: 0.5,
-      messages: [{role:'system', content: systemOverride || SYSTEM_PROMPT},{role:'user',content:prompt}]
-    })
+    headers: {'Content-Type': 'application/json','Authorization': 'Bearer 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'},
+    body: JSON.stringify({model: 'llama-3.3-70b-versatile', messages: [{role:'system',content: systemOverride || SYSTEM_PROMPT},{role:'user',content:prompt}], max_tokens: 1500, temperature: 0.7})
   });
   const data = await response.json();
   if (data.error) throw new Error(data.error.message);
@@ -1178,9 +1173,6 @@ function openStrongPopup(strongNum, word, event) {
   _showPopup(strongNum, data?.orig || '—', data?.translit || '', data?.def || `Número Strong ${strongNum}`, data?.tags || [], word, event);
 }
 
-// Cache Strong para não repetir chamadas da mesma palavra
-const strongCache = {};
-
 async function openStrongAI(clean, original, testament, event) {
   event.stopPropagation();
   const popup = document.getElementById('strong-popup');
@@ -1195,20 +1187,6 @@ async function openStrongAI(clean, original, testament, event) {
   bibState.strongClickWord = {word: clean, testament, num: null};
   _positionPopup(popup, event);
 
-  // Verificar cache primeiro
-  const cacheKey = clean + '_' + testament;
-  if (strongCache[cacheKey]) {
-    const j = strongCache[cacheKey];
-    document.getElementById('sp-num').textContent = j.num || `"${original}"`;
-    document.getElementById('sp-original').textContent = j.orig || original;
-    document.getElementById('sp-translit').textContent = j.translit ? `/ ${j.translit} /` : '';
-    document.getElementById('sp-def').textContent = j.def || '';
-    document.getElementById('sp-tags').innerHTML = (j.tags||[]).map(t=>`<span class="sp-tag">${t}</span>`).join('');
-    document.getElementById('sp-ai-btn').style.display = 'block';
-    document.getElementById('sp-ai-btn').disabled = false;
-    return;
-  }
-
   try {
     const lang = testament === 'AT' ? 'hebraico' : 'grego';
     const prompt = `Análise Strong da palavra portuguesa "${original}" (${testament}, idioma original: ${lang}).
@@ -1222,20 +1200,14 @@ Responda SOMENTE com JSON válido, sem markdown, sem explicação extra:
 }`;
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: {'Content-Type':'application/json', 'Authorization':'Bearer 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'},
-      body: JSON.stringify({
-        model: 'gemma2-9b-it',
-        max_tokens: 300,
-        temperature: 0.1,
-        messages: [{role:'system',content:'Responda APENAS com JSON puro, sem markdown.'},{role:'user',content:prompt}]
-      })
+      headers: {'Content-Type':'application/json','Authorization':'Bearer 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'},
+      body: JSON.stringify({model:'llama-3.3-70b-versatile', messages:[{role:'system',content:'Você é um especialista em Strong bíblico. Responda APENAS com JSON puro, sem markdown.'},{role:'user',content:prompt}], max_tokens:400, temperature:0.2})
     });
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
     let txt = data.choices?.[0]?.message?.content || '{}';
     txt = txt.replace(/```json|```/g,'').trim();
     const j = JSON.parse(txt);
-    strongCache[cacheKey] = j;
     document.getElementById('sp-num').textContent = j.num || `"${original}"`;
     document.getElementById('sp-original').textContent = j.orig || original;
     document.getElementById('sp-translit').textContent = j.translit ? `/ ${j.translit} /` : '';
